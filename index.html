@@ -1,62 +1,131 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang Web Tải Video TikTok</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background: #f4f4f9; }
-        .container { background: white; padding: 20px; border-radius: 10px; display: inline-block; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); width: 90%; max-width: 400px; }
-        input { width: 90%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; }
-        button { width: 95%; padding: 12px; font-size: 16px; background: #fe2c55; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        button:hover { background: #e0244d; }
-        #result { margin-top: 20px; text-align: left; word-break: break-all; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Quản lý tài khoản CHINH VIDEO DOWNLOADER</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 30px; background: #f4f4f9; color: #1e293b; }
+    .container { background: white; padding: 20px; border-radius: 10px; display: inline-block; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); width: 90%; max-width: 400px; box-sizing: border-box; }
+    .alert-box { background: #fff7ed; border: 1px solid #ffedd5; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 13px; color: #9a3412; text-align: left; line-height: 1.4; }
+    .card-section { border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 15px; text-align: left; }
+    .card-section h3 { margin-top: 0; font-size: 16px; color: #fe2c55; }
+    .sub-txt { font-size: 13px; color: #64748b; margin-bottom: 10px; }
+    input { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; font-size: 16px; background: #fe2c55; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    button:hover { background: #e0244d; }
+    .btn-secondary { background: #00b0ff; }
+    .btn-secondary:hover { background: #0091ea; }
+    .msg-status { margin-top: 10px; font-size: 14px; word-break: break-all; padding: 8px; border-radius: 5px; display: none; }
+    .msg-error { display: block; color: #e53e3e; background: #fff5f5; border: 1px solid #fed7d7; }
+    .msg-success { display: block; color: #2f855a; background: #f0fff4; border: 1px solid #c6f6d5; }
+  </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>Tải Video Không Logo</h2>
-        <input type="text" id="videoUrl" placeholder="Dán link TikTok vào đây...">
-        <button onclick="getVid()">Lấy Video</button>
+        <h2 style="font-size: 18px; margin-bottom: 5px;">ADMIN PANEL</h2>
+        <p style="font-size: 12px; color: #64748b; margin-top: 0; margin-bottom: 15px;">Quản lý tài khoản CHINH VIDEO</p>
         
-        <div id="result"></div>
+        <div class="alert-box">
+            <b>Lưu ý:</b> Đây là giao diện quản trị nội bộ. Không đặt mật khẩu bí mật trong mã HTML. Hệ thống đồng bộ dữ liệu trực tiếp qua Render và Firebase.
+        </div>
+
+        <!-- KHU VỰC 1: TÌM TÀI KHOẢN -->
+        <div class="card-section">
+            <h3>👤 Tìm tài khoản</h3>
+            <p class="sub-txt">Nhập username hoặc ID hệ thống hỗ trợ.</p>
+            <input type="text" id="targetUsername" placeholder="Nhập ID (Ví dụ: chinhly_212)">
+            <button onclick="executeFindUser()">Tìm tài khoản</button>
+            <div id="searchResult" class="msg-status"></div>
+        </div>
+        
+        <!-- KHU VỰC 2: GIA HẠN SỬ DỤNG -->
+        <div class="card-section">
+            <h3>🗓️ Gia hạn tài khoản</h3>
+            <p class="sub-txt">Hãy tìm tài khoản trước khi nhập số ngày gia hạn.</p>
+            <input type="number" id="extendDays" value="30" min="1">
+            <button class="btn-secondary" onclick="executeExtendUser()">Gia hạn tài khoản</button>
+            <div id="extendResult" class="msg-status"></div>
+        </div>
     </div>
 
+    <!-- SCRIPT ĐIỀU PHỐI KẾT NỐI ĐỒNG BỘ DẠNG GET MỚI -->
     <script>
-        async function getVid() {
-            const urlInput = document.getElementById('videoUrl').value;
-            const resultDiv = document.getElementById('result');
+        const API_BASE_URL = 'https://chinh-video-api.onrender.com';
 
-            if (!urlInput) {
-                alert('Vui lòng nhập đường dẫn video!');
+        // 1. Logic xử lý Tìm kiếm tài khoản đồng bộ luồng GET của bạn
+        async function executeFindUser() {
+            const username = document.getElementById('targetUsername').value.trim();
+            const resultDiv = document.getElementById('searchResult');
+
+            if (!username) {
+                alert('Vui lòng nhập ID/Username cần tìm!');
                 return;
             }
 
-            resultDiv.innerHTML = 'Đang xử lý, vui lòng chờ...';
+            resultDiv.className = 'msg-status';
+            resultDiv.style.display = 'block';
+            resultDiv.style.color = '#4a5568';
+            resultDiv.innerHTML = 'Đang tra cứu cơ sở dữ liệu hệ thống...';
 
             try {
-                const apiEndpoint = `https://chinh-video-api.onrender.com/api/download?url=${encodeURIComponent(urlInput)}`;
-                
+                // Đổi cấu trúc gọi sang GET đồng bộ giống hệt hàm tải video gốc của mày
+                const apiEndpoint = `${API_BASE_URL}/api/find_user?username=${encodeURIComponent(username)}`;
                 const res = await fetch(apiEndpoint);
                 const json = await res.json();
 
                 if (json.code === 0) {
                     const info = json.data;
+                    resultDiv.className = 'msg-status msg-success';
                     resultDiv.innerHTML = `
-                        <hr>
-                        <p><b>Tiêu đề:</b> ${info.title}</p>
-                        <p><b>Tác giả:</b> ${info.author.nickname}</p>
-                        <a href="${info.play}" target="_blank" style="display: block; text-align: center; padding: 12px; background: #00b0ff; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">📥 Tải Video Ngay</a>
+                        <p style="margin:4px 0;"><b>ID:</b> ${info.username}</p>
+                        <p style="margin:4px 0;"><b>Thiết bị:</b> ${info.device_id || 'Đã liên kết'}</p>
+                        <p style="margin:4px 0;"><b>Hạn dùng:</b> ${info.expiry_date || 'Chưa cập nhật'}</p>
                     `;
                 } else {
-                    resultDiv.innerHTML = `<p style="color: red;">Lỗi: ${json.msg}</p>`;
+                    resultDiv.className = 'msg-status msg-error';
+                    resultDiv.innerHTML = `Lỗi: ${json.msg}`;
                 }
             } catch (err) {
-                resultDiv.innerHTML = `<p style="color: red;">Không thể kết nối tới máy chủ API!</p>`;
+                resultDiv.className = 'msg-status msg-error';
+                resultDiv.innerHTML = 'Không tìm được tài khoản: Firebase chưa kết nối. Kiểm tra cấu hình Render.. Kiểm tra username, endpoint và main.py.';
+            }
+        }
+
+        // 2. Logic xử lý Gia hạn tài khoản đồng bộ luồng GET
+        async function executeExtendUser() {
+            const username = document.getElementById('targetUsername').value.trim();
+            const days = document.getElementById('extendDays').value;
+            const resultDiv = document.getElementById('extendResult');
+
+            if (!username) {
+                alert('Vui lòng nhập ID tài khoản cần gia hạn ở ô phía trên trước!');
+                return;
+            }
+
+            resultDiv.className = 'msg-status';
+            resultDiv.style.display = 'block';
+            resultDiv.style.color = '#4a5568';
+            resultDiv.innerHTML = 'Đang xử lý cấp phép quyền hạn...';
+
+            try {
+                const apiEndpoint = `${API_BASE_URL}/api/extend_user?username=${encodeURIComponent(username)}&days=${encodeURIComponent(days)}`;
+                const res = await fetch(apiEndpoint);
+                const json = await res.json();
+
+                if (json.code === 0) {
+                    resultDiv.className = 'msg-status msg-success';
+                    resultDiv.innerHTML = `Thành công: Đã gia hạn thêm ${days} ngày cho tài khoản ${username}!`;
+                } else {
+                    resultDiv.className = 'msg-status msg-error';
+                    resultDiv.innerHTML = `Lỗi: ${json.msg}`;
+                }
+            } catch (err) {
+                resultDiv.className = 'msg-status msg-error';
+                resultDiv.innerHTML = 'Hệ thống bận: Không thể gửi lệnh điều khiển tới máy chủ Render.';
             }
         }
     </script>
-
 </body>
 </html>
